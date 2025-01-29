@@ -6,12 +6,13 @@
 
 ### DeDuplication
 
-1. By using a thread-safe cache `sync.Map` to store the `id` we can prevent same request being counted more than once.
+1. By using a cache `Map` to store the `id` we can prevent same request being counted more than once.
 2. When the request lands to onto the handler `accept`, we check if the `id` exists in the map
    1. If not then proceed with logic
    2. Fail the request
-3. Injected in the `RequestsHandler` is a `Cache` interface. Currently I've used an inmemory cache `sync.Map`. But since in `extension-1` we can have multiple instances of the app we need to use Redis to cache what we've processed in the minute. 
+3. Injected in the `RequestsHandler` is a `Cache` interface. Currently I've used an inmemory cache `Map`. But since in `extension-1` we can have multiple instances of the app we need to use Redis to cache what we've processed in the minute. 
 4. To do that we just need to write three methods on Redis struct and pass it to our handler.
+5. The access to map data is made thread safe by using a mutex.
 
 #### Logic around dedeuplication
 

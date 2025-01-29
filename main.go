@@ -20,7 +20,7 @@ var (
 )
 
 const cleanupWindow = 10 * time.Second
-const deduplicationWindow = 10 * time.Second
+const deduplicationWindow = 1 * time.Minute
 const maxCacheEvictions = 10000
 
 type Cache interface {
@@ -104,12 +104,10 @@ func (u *RequestsHandler) accept(w http.ResponseWriter, r *http.Request) {
 		url := fmt.Sprintf("http://localhost:8000%s?visits=%d", endpoint, u.Req.Load())
 
 		resp, _ := http.Post(url, "application/json", nil)
-		if resp != nil {
-			logger.Printf("response code: %d", resp.StatusCode)
-			if resp.StatusCode != 200 {
-				http.Error(w, "failed", http.StatusBadRequest)
-				return
-			}
+		logger.Printf("response code: %d", resp.StatusCode)
+		if resp.StatusCode != 200 {
+			http.Error(w, "failed", http.StatusBadRequest)
+			return
 		}
 	}
 

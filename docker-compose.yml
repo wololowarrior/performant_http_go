@@ -17,9 +17,16 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    # command: 
-    #   - bash
-    #   - -c
-    #   - kafka-topics --create --topic requests --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
     ports:
       - "9092:9092"
+  # app:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: app
+  #   depends_on:
+  #     - kafka
+  #   environment:
+  #     KAFKA_BROKER: kafka:9092
+  #   ports:
+  #     - "8000:8000"

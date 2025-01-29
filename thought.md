@@ -1,6 +1,6 @@
 ### APIs
 
-1. Start the http server with couple of endpoints
+1. The http server has with couple of endpoints
 2. `/api/verve/accept` accepts `id` and `endpoint` as query params. `id` being mandatory.
 3. `/test` this `POST` endpoint is called from the above.
 
@@ -13,7 +13,7 @@
 3. Injected in the `RequestsHandler` is a `Cache` interface. Currently I've used an inmemory cache `sync.Map`. But since in `extension-1` we can have multiple instances of the app we need to use Redis to cache what we've processed in the minute. 
 4. To do that we just need to write three methods on Redis struct and pass it to our handler.
 
-Logic around dedeuplication:
+#### Logic around dedeuplication
 
 1. Since the throughput of the system is very high, its not possible to clear the cache every minute.
    1. It'll be very inefficient as there can be 50k+ unique objects per minute.
@@ -24,10 +24,27 @@ Logic around dedeuplication:
    2. Cache the id along with the minute id, frees us from cleaning up the cache at every minute end and we can just go on adding same ids at the start of new minute. Since it won't clash with the old one.
    3. The value being the timestamp at which the entry was created. This is to not evict new and valid entries
   
-Cache cleanup
+#### Cache cleanup
 
 1. There is a cleanup thread that runs at configurable intervals (it has a cooldown period), removing objects which were created more than a minute ago.
 2. We evict the entries in configurable batches as not to overwhelm the system and only spend time cleaning up the cache.
+
+
+```
+minute x 
+Req id1 ... cache = {x:id1}
+Req id2 ... cache = {x:id2}
+.
+.
+Req id2 ... exists in cache fail request
+
+minute x+1
+<<<<<Cleanup thread>>>>> # removes old object
+Req id1 ... cache = {x+1:id1}
+.
+.
+
+```
 
 ## Logging the request per minute
 

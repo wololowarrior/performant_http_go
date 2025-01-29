@@ -74,21 +74,20 @@ func (u *RequestsHandler) accept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ok := u.cache.get(fmt.Sprintf("%d:%s", u.cacheModifier, id)); ok {
-		http.Error(w, "ratelimited.. try again", http.StatusBadRequest)
-		return
+	if ok := u.cache.get(fmt.Sprintf("%d:%s", u.cacheModifier, id)); !ok {
+		u.Req.Add(1)
 	}
 
-	u.Req.Add(1)
+	
 
 	endpoint := r.URL.Query().Get("endpoint")
-	logger.Printf("id: %s, endpoint: %s", id, endpoint)
+	// logger.Printf("id: %s, endpoint: %s", id, endpoint)
 
 	if endpoint != "" {
 		url := fmt.Sprintf("http://localhost:8000%s?visits=%d", endpoint, u.Req.Load())
 
 		resp, _ := http.Post(url, "application/json", nil)
-		log.Printf("response code: %d", resp.StatusCode)
+		logger.Printf("response code: %d", resp.StatusCode)
 		if resp.StatusCode != 200 {
 			http.Error(w, "failed", http.StatusBadRequest)
 			return
@@ -113,7 +112,8 @@ func (u *RequestsHandler) flushRequests() {
 		u.Req.Store(0)
 		u.cacheModifier++
 
-		logger.Printf("unique requests %d", val)
+		// uncomment to log unique requests
+		// logger.Printf("unique requests %d", val) 
 
 		_, err := kafkaWriter.WriteMessages(kafka.Message{Value: []byte(fmt.Sprintf("%d", val))})
 		if err != nil {
